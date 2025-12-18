@@ -1,0 +1,9 @@
+{
+  "name": "随机高度",
+  "id": 179868291855602,
+  "main": "dist/main.js",
+  "ui": "dist/index.html",
+  "editor_type": [
+    "canvas"
+  ]
+}
