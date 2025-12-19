@@ -1,6 +1,6 @@
 // UI 尺寸常量
 export const UI_WIDTH = 180;
-export const UI_HEIGHT = 360;
+export const UI_HEIGHT = 460;
 
 // 高度调整常量
 export const MIN_HEIGHT = 1;

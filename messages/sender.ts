@@ -10,6 +10,7 @@ export enum UIMessage {
   RANDOMIZE_HEIGHT_FLUCTUATE = 'RandomizeHeightFluctuate', // 随机增加或减少50%
   RANDOMIZE_HEIGHT_RANGE = 'RandomizeHeightRange', // 设置120px-500px随机值
   RANDOMIZE_HEIGHT_INCREMENT = 'RandomizeHeightIncrement', // 随机增加20%-50%
+  RANDOMIZE_PATH_POINTS = 'RandomizePathPoints', // 随机变换路径控制点Y轴参数
 }
 
 type MessageType = {
