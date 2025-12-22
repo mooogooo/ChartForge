@@ -93,7 +93,12 @@ function App() {
             />
           </div>
           <div className="w-1/3">
-            <RenderButton text="生成点" onClick={() => {}} />
+            <RenderButton text="生成点" onClick={() => {
+              sendMsgToPlugin({
+                type: UIMessage.GENERATE_POINTS,
+                data: null,
+              });
+            }} />
           </div>
         </div>
       </div>

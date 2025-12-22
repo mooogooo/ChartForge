@@ -3,6 +3,7 @@ import { UI_WIDTH, UI_HEIGHT } from './constants'
 import { randomizeHeightFluctuate, randomizeHeightRange, randomizeHeightIncrement } from './heightUtils'
 import { randomizePathPoints } from './pathUtils'
 import { randomizeArcData,randomizeArcData_curve,randomizeArcData_randomSet } from './arcUtils'
+import { generatePointsAtPenNodes } from './pointUtils'
 
 // 使用传统函数和var声明以提高兼容性
 mg.showUI(__html__, {
@@ -19,21 +20,21 @@ mg.ui.onmessage = function(msg) {
   if (messageType === UIMessage.RANDOMIZE_HEIGHT_FLUCTUATE) {
     // 获取选中的元素
     var selection = mg.document.currentPage.selection;
-    var result = randomizeHeightFluctuate(selection);
+    var result: { success: boolean; message?: string } = randomizeHeightFluctuate(selection);
     if (!result.success) {
       mg.ui.postMessage({ type: 'Error', data: result.message || '请先选择一个矩形' });
     }
   } else if (messageType === UIMessage.RANDOMIZE_HEIGHT_RANGE) {
     // 获取选中的元素
     var selection = mg.document.currentPage.selection;
-    var result = randomizeHeightRange(selection);
+    var result: { success: boolean; message?: string } = randomizeHeightRange(selection);
     if (!result.success) {
       mg.ui.postMessage({ type: 'Error', data: result.message || '请先选择一个矩形' });
     }
   } else if (messageType === UIMessage.RANDOMIZE_HEIGHT_INCREMENT) {
     // 获取选中的元素
     var selection = mg.document.currentPage.selection;
-    var result = randomizeHeightIncrement(selection);
+    var result: { success: boolean; message?: string } = randomizeHeightIncrement(selection);
     if (!result.success) {
       mg.ui.postMessage({ type: 'Error', data: result.message || '请先选择一个矩形' });
     }
@@ -41,16 +42,23 @@ mg.ui.onmessage = function(msg) {
       // 获取选中的元素
       var selection = mg.document.currentPage.selection;
       // 使用默认的随机缩放算法
-      var result = randomizePathPoints(selection, 'randomScale');
+      var result: { success: boolean; message?: string } = randomizePathPoints(selection, 'randomScale');
       if (!result.success) {
         mg.ui.postMessage({ type: 'Error', data: result.message || '请先选择一个路径物体' });
       }
     } else if (messageType === UIMessage.RANDOMIZE_ARC_DATA) {
       // 获取选中的元素
       var selection = mg.document.currentPage.selection;
-      var result: { success: boolean; message?: string | undefined } = randomizeArcData_randomSet(selection as any[]);
+      var result: { success: boolean; message?: string } = randomizeArcData_randomSet(selection as any[]);
       if (!result.success) {
         mg.ui.postMessage({ type: 'Error', data: result.message || '请先选择一个椭圆对象' });
+      }
+    } else if (messageType === UIMessage.GENERATE_POINTS) {
+      // 获取选中的元素
+      var selection = mg.document.currentPage.selection;
+      var result: { success: boolean; message?: string } = generatePointsAtPenNodes(selection);
+      if (!result.success) {
+        mg.ui.postMessage({ type: 'Error', data: result.message || '请先选择一个路径物体' });
       }
     } else if (messageType === UIMessage.SET_FIXED_SIZE) {
     // 获取选中的元素
