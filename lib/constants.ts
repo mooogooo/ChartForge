@@ -1,14 +1,14 @@
 // UI 尺寸常量
-export const UI_WIDTH = 180;
-export const UI_HEIGHT = 460;
+export const UI_WIDTH = 260;
+export const UI_HEIGHT = 500;
 
 // 高度调整常量
 export const MIN_HEIGHT = 1;
 
 
 // 高度调整范围常量
-export const HEIGHT_RANGE_MIN = 160;
-export const HEIGHT_RANGE_MAX = 660;
+export const HEIGHT_RANGE_MIN = 0;
+export const HEIGHT_RANGE_MAX = 299;
 
 
 export const FLUCTUATION_MIN = -0.5;

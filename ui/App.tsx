@@ -49,72 +49,106 @@ function App() {
     },
   ];
 
+  function RenderButton(button: { text: string; onClick: () => void }) {
+    return (
+      <div
+        className="text-gray-300/60 w-full h-full rounded-lg text-sm bg-[#2c2c2c] flex items-center justify-center cursor-pointer hover:bg-[#3a3a3a] transition-colors hover:text-[#fff]"
+        onClick={button.onClick}
+      >
+        {button.text}
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={`bg-[#1E1E1E] p-4 flex flex-col items-center w-[${UI_WIDTH}px] h-[${UI_HEIGHT}px] pt-[16px] `}
-    >
-      <div className=" text-base font-bold w-full  bg-gradient-to-r pt-3 pb-4 from-blue-50 to-blue-500 bg-clip-text text-transparent flex items-center gap-2 ">
+    <div className="bg-[#1E1E1E] px-3 py-4 gap-4 flex flex-col w-[260px] h-[500px]  text-white  select-none">
+      <div className=" flex items-center justify-between w-full">
+        <div className="">
+          图表锻造<span className="ml-3 text-xs opacity-60">Chart Forge</span>
+        </div>
         <div className="w-5 h-5">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
-            fill="rgba(70,146,221,1)"
+            fill="rgba(255,255,255,0.5)"
           >
-            <path d="M2 13H8V21H2V13ZM9 3H15V21H9V3ZM16 8H22V21H16V8Z"></path>
+            <path d="M12 22C6.47715 22 2 17.5228 2 12 2 6.47715 6.47715 2 12 2 17.5228 2 22 6.47715 22 12 22 17.5228 17.5228 22 12 22ZM12 20C16.4183 20 20 16.4183 20 12 20 7.58172 16.4183 4 12 4 7.58172 4 4 7.58172 4 12 4 16.4183 7.58172 20 12 20ZM13 10.5V15H14V17H10V15H11V12.5H10V10.5H13ZM13.5 8C13.5 8.82843 12.8284 9.5 12 9.5 11.1716 9.5 10.5 8.82843 10.5 8 10.5 7.17157 11.1716 6.5 12 6.5 12.8284 6.5 13.5 7.17157 13.5 8Z"></path>
           </svg>
         </div>
-        高度
-      </div>
-
-      <div className="flex flex-col gap-3 text-sm  w-full">
-        {buttonConfig.map((button, index) => (
-          <div key={index} className="flex flex-col gap-2">
-            <button
-              className="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-full "
-              onClick={button.onClick}
-            >
-              {button.text}
-            </button>
-            <span className="text-gray-600 text-xs">{button.description}</span>
-          </div>
-        ))}
-      </div>
-      <div className="w-full h-[2px] mt-4 bg-gray-600"></div>
-      <div className=" text-base font-bold w-full  bg-gradient-to-r pt-3 pb-4 from-blue-50 to-blue-500 bg-clip-text text-transparent flex items-center gap-2 ">
-         <div className="w-5 h-5">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="rgba(70,146,221,1)"><path d="M5 3V19H21V21H3V3H5ZM19.9393 5.93934L22.0607 8.06066L16 14.1213L13 11.121L9.06066 15.0607L6.93934 12.9393L13 6.87868L16 9.879L19.9393 5.93934Z"></path></svg>
-          </div>
-        折线
       </div>
       <div className="flex flex-col gap-2">
-        <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-full  text-sm  "
-          onClick={() => {
-            sendMsgToPlugin({
-              type: UIMessage.RANDOMIZE_PATH_POINTS,
-              data: null,
-            });
-          }}
-        >
-         
-          折线图随机
-        </button>
-      </div>
-           <div className="w-full h-[2px] mt-4 bg-gray-600"></div>
-
-      <div className=" text-base font-bold w-full  bg-gradient-to-r pt-3 pb-4 from-blue-50 to-blue-500 bg-clip-text text-transparent flex items-center gap-2 ">
-         <div className="w-5 h-5">
-           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="rgba(70,146,221,1)"><path d="M16 16C17.6569 16 19 17.3431 19 19C19 20.6569 17.6569 22 16 22C14.3431 22 13 20.6569 13 19C13 17.3431 14.3431 16 16 16ZM6 12C8.20914 12 10 13.7909 10 16C10 18.2091 8.20914 20 6 20C3.79086 20 2 18.2091 2 16C2 13.7909 3.79086 12 6 12ZM14.5 2C17.5376 2 20 4.46243 20 7.5C20 10.5376 17.5376 13 14.5 13C11.4624 13 9 10.5376 9 7.5C9 4.46243 11.4624 2 14.5 2Z"></path></svg>
+        <div className="text-sm">柱状图</div>
+        <div className="flex gap-2 h-16 ">
+          <RenderButton
+            text="高度随机"
+            onClick={() => {
+              sendMsgToPlugin({
+                type: UIMessage.RANDOMIZE_HEIGHT_FLUCTUATE,
+                data: null,
+              });
+            }}
+          />
+          <RenderButton
+            text="增量随机"
+            onClick={() => {
+              sendMsgToPlugin({
+                type: UIMessage.RANDOMIZE_HEIGHT_INCREMENT,
+                data: null,
+              });
+            }}
+          />
+        </div>
+        <div className="flex gap-2  h-16 ">
+          <div className="w-2/3">
+            <RenderButton
+              text="范围随机"
+              onClick={() => {
+                sendMsgToPlugin({
+                  type: UIMessage.RANDOMIZE_HEIGHT_RANGE,
+                  data: null,
+                });
+              }}
+            />
           </div>
-        点
+          <div className="h-full flex flex-col gap-2 w-1/3 text-xs">
+            <input
+              className="text-[#C8C8c8]  text-center w-full h-full rounded-lg text-md bg-[#2c2c2c] flex items-center justify-center placeholder:text-center appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-moz-number-spin-box]:appearance-none"
+              placeholder="299"
+              type="number"
+            />
+
+            <input
+              className="text-[#C8C8c8]  text-center w-full h-full rounded-lg text-md bg-[#2c2c2c] flex items-center justify-center placeholder:text-center appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-moz-number-spin-box]:appearance-none"
+              placeholder="0"
+              type="number"
+            />
+          </div>
+        </div>
       </div>
-      <div className="flex gap-2  text-sm ">
-        <button className="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-full ">
-          X 随机
-        </button>
-        <button className="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-full ">
-         Y 随机
-        </button>
+      <div className="flex flex-col gap-2">
+        <div className="text-sm ">折线图</div>
+        <div className="flex  gap-2  h-16 ">
+          <div className="w-2/3">
+            <RenderButton
+              text="随机折线"
+              onClick={() => {
+                sendMsgToPlugin({
+                  type: UIMessage.RANDOMIZE_PATH_POINTS,
+                  data: null,
+                });
+              }}
+            />
+          </div>
+          <div className="w-1/3">
+            <RenderButton text="生成点" onClick={() => {}} />
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-col gap-2">
+        <div className="text-sm ">饼图</div>
+        <div className="flex  gap-2  h-16 ">
+          <RenderButton text="随机" onClick={() => {}} />
+        </div>
       </div>
     </div>
   );
