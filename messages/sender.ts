@@ -11,6 +11,7 @@ export enum UIMessage {
   RANDOMIZE_HEIGHT_RANGE = 'RandomizeHeightRange', // 设置120px-500px随机值
   RANDOMIZE_HEIGHT_INCREMENT = 'RandomizeHeightIncrement', // 随机增加20%-50%
   RANDOMIZE_PATH_POINTS = 'RandomizePathPoints', // 随机变换路径控制点Y轴参数
+  RANDOMIZE_ARC_DATA = 'RandomizeArcData', // 随机设置EllipseNode的弧度数据
 }
 
 type MessageType = {

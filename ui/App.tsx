@@ -1,54 +1,7 @@
-import React, { useState, useEffect } from "react";
 import "./App.css";
 import { sendMsgToPlugin, UIMessage } from "@messages/sender";
 
-import {
-  MIN_HEIGHT,
-  HEIGHT_RANGE_MIN,
-  HEIGHT_RANGE_MAX,
-  FLUCTUATION_MIN,
-  INCREMENT_MIN,
-  INCREMENT_MAX,
-  UI_WIDTH,
-  UI_HEIGHT,
-} from "../lib/constants";
-
 function App() {
-  // 按钮配置数组 - 将按钮数据与渲染逻辑分离
-  // 这样可以更方便地管理和扩展按钮功能
-  const buttonConfig = [
-    {
-      text: "随机高度",
-      description: "随机加减50%",
-      onClick: () => {
-        sendMsgToPlugin({
-          type: UIMessage.RANDOMIZE_HEIGHT_FLUCTUATE,
-          data: null,
-        });
-      },
-    },
-    {
-      text: "增量随机",
-      description: "随机加20%-50%",
-      onClick: () => {
-        sendMsgToPlugin({
-          type: UIMessage.RANDOMIZE_HEIGHT_INCREMENT,
-          data: null,
-        });
-      },
-    },
-    {
-      text: "范围随机",
-      description: `${HEIGHT_RANGE_MIN}px-${HEIGHT_RANGE_MAX}px内随机切换`,
-      onClick: () => {
-        sendMsgToPlugin({
-          type: UIMessage.RANDOMIZE_HEIGHT_RANGE,
-          data: null,
-        });
-      },
-    },
-  ];
-
   function RenderButton(button: { text: string; onClick: () => void }) {
     return (
       <div
@@ -147,7 +100,12 @@ function App() {
       <div className="flex flex-col gap-2">
         <div className="text-sm ">饼图</div>
         <div className="flex  gap-2  h-16 ">
-          <RenderButton text="随机" onClick={() => {}} />
+          <RenderButton text="随机" onClick={() => {
+            sendMsgToPlugin({
+              type: UIMessage.RANDOMIZE_ARC_DATA,
+              data: null,
+            });
+          }} />
         </div>
       </div>
     </div>
