@@ -93,24 +93,44 @@ function App() {
             />
           </div>
           <div className="w-1/3">
-            <RenderButton text="生成点" onClick={() => {
-              sendMsgToPlugin({
-                type: UIMessage.GENERATE_POINTS,
-                data: null,
-              });
-            }} />
+            <RenderButton
+              text="生成点"
+              onClick={() => {
+                sendMsgToPlugin({
+                  type: UIMessage.GENERATE_POINTS,
+                  data: null,
+                });
+              }}
+            />
+          </div>
+        </div>
+        <div className="flex  gap-2  h-8 ">
+          <div className="w-1/3">
+            <RenderButton text="+7" />
+          </div>{" "}
+          <div className="w-1/3">
+            <RenderButton text="+12" />
+          </div>
+          <div className="w-1/3">
+            <RenderButton text="+24" />
+          </div>{" "}
+          <div className="w-1/3">
+            <RenderButton text="+30" />
           </div>
         </div>
       </div>
       <div className="flex flex-col gap-2">
         <div className="text-sm ">饼图</div>
         <div className="flex  gap-2  h-16 ">
-          <RenderButton text="随机" onClick={() => {
-            sendMsgToPlugin({
-              type: UIMessage.RANDOMIZE_ARC_DATA,
-              data: null,
-            });
-          }} />
+          <RenderButton
+            text="随机"
+            onClick={() => {
+              sendMsgToPlugin({
+                type: UIMessage.RANDOMIZE_ARC_DATA,
+                data: null,
+              });
+            }}
+          />
         </div>
       </div>
     </div>
