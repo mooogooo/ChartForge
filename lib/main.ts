@@ -27,7 +27,9 @@ mg.ui.onmessage = function(msg) {
   } else if (messageType === UIMessage.RANDOMIZE_HEIGHT_RANGE) {
     // 获取选中的元素
     var selection = mg.document.currentPage.selection;
-    var result: { success: boolean; message?: string } = randomizeHeightRange(selection);
+    var rangeMin = messageData?.rangeMin ?? 60;
+    var rangeMax = messageData?.rangeMax ?? 299;
+    var result: { success: boolean; message?: string } = randomizeHeightRange(selection, rangeMin, rangeMax);
     if (!result.success) {
       mg.ui.postMessage({ type: 'Error', data: result.message || '请先选择一个矩形' });
     }

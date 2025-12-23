@@ -5,12 +5,6 @@ export const UI_HEIGHT = 500;
 // 高度调整常量
 export const MIN_HEIGHT = 1;
 
-
-// 高度调整范围常量
-export const HEIGHT_RANGE_MIN = 0;
-export const HEIGHT_RANGE_MAX = 299;
-
-
 export const FLUCTUATION_MIN = -0.5;
 
 // 高度调整增量常量 20%-50%

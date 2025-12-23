@@ -1,4 +1,4 @@
-import { MIN_HEIGHT, HEIGHT_RANGE_MIN, HEIGHT_RANGE_MAX, FLUCTUATION_MIN, INCREMENT_MIN, INCREMENT_MAX } from './constants';
+import { MIN_HEIGHT, FLUCTUATION_MIN, INCREMENT_MIN, INCREMENT_MAX } from './constants';
 
 // 随机增减50%高度
 export function randomizeHeightFluctuate(selection: readonly any[]) {
@@ -35,7 +35,10 @@ export function randomizeHeightFluctuate(selection: readonly any[]) {
 }
 
 // 设置120px-500px随机高度
-export function randomizeHeightRange(selection: readonly any[]) {
+export function randomizeHeightRange(selection: readonly any[], rangeMin?: number, rangeMax?: number) {
+  const min = rangeMin ?? 60;
+  const max = rangeMax ?? 299;
+  
   if (selection.length === 0) {
     return { success: false, message: '请先选择一个矩形' };
   }
@@ -47,8 +50,8 @@ export function randomizeHeightRange(selection: readonly any[]) {
       var currentHeight = element.height;
       var currentY = element.y;
       
-      // 生成120px-500px内的随机值
-      var newHeight = Math.round(Math.random() * (HEIGHT_RANGE_MAX - HEIGHT_RANGE_MIN) + HEIGHT_RANGE_MIN);
+      // 生成范围内的随机值
+      var newHeight = Math.round(Math.random() * (max - min) + min);
       var heightChange = newHeight - currentHeight;
       
       // 应用新高度并调整Y坐标
