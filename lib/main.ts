@@ -43,10 +43,10 @@ mg.ui.onmessage = function(msg) {
   } else if (messageType === UIMessage.RANDOMIZE_PATH_POINTS) {
       // 获取选中的元素
       var selection = mg.document.currentPage.selection;
-      // 使用默认的随机缩放算法
-      var result: { success: boolean; message?: string } = randomizePathPoints(selection, 'randomScale');
+      // 在稳定范围内生成全新走势
+      var result: { success: boolean; message?: string } = randomizePathPoints(selection);
       if (!result.success) {
-        mg.ui.postMessage({ type: 'Error', data: result.message || '请先选择一个路径物体' });
+        mg.notify(result.message || '请先选择一个路径物体');
       }
     } else if (messageType === UIMessage.RANDOMIZE_ARC_DATA) {
       // 获取选中的元素
