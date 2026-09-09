@@ -1,9 +1,12 @@
 // 插件发出的消息
 export enum PluginMessage {
+  THEME_CHANGED = 'ThemeChanged',
 }
 
 //UI发出的消息
 export enum UIMessage {
+  RESIZE_UI = 'ResizeUI', // 按界面实际内容高度调整插件窗口
+  UI_READY = 'UIReady', // UI 已监听消息，请求当前主题
   NOTIFY_ERROR = 'NotifyError', // UI 输入校验的系统提示
   HELLO = 'Hello!',
   RANDOMIZE_HEIGHT = 'RandomizeHeight',

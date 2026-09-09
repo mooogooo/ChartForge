@@ -1,4 +1,4 @@
-import { UIMessage } from '@messages/sender'
+import { UIMessage, PluginMessage } from '@messages/sender'
 import { UI_WIDTH, UI_HEIGHT } from './constants'
 import { randomizeHeightFluctuate, randomizeHeightRange, randomizeHeightIncrement } from './heightUtils'
 import { randomizePathPoints } from './pathUtils'
@@ -6,10 +6,20 @@ import { randomizeArcData,randomizeArcData_curve,randomizeArcData_randomSet } fr
 import { generatePointsAtPenNodes } from './pointUtils'
 
 // 使用传统函数和var声明以提高兼容性
-mg.showUI(__html__, {
+// 在首屏 HTML 中注入主题，避免浅色模式先闪现深色界面。
+const initialTheme = mg.themeColor === 'light' ? 'light' : 'dark';
+mg.showUI(__html__.replace(/<html\b/i, `<html data-chartforge-theme="${initialTheme}"`), {
   width: UI_WIDTH,
   height: UI_HEIGHT
 });
+
+function publishTheme(theme: string = mg.themeColor) {
+  mg.ui.postMessage({
+    type: PluginMessage.THEME_CHANGED,
+    data: theme === 'light' ? 'light' : 'dark',
+  });
+}
+mg.on('themechange', publishTheme);
 
 // 处理UI消息的回调函数
 mg.ui.onmessage = function(msg) {
@@ -17,6 +27,23 @@ mg.ui.onmessage = function(msg) {
   // 避免解构赋值，直接访问属性
   var messageType = msg.type;
   var messageData = msg.data;
+
+  if (messageType === UIMessage.RESIZE_UI) {
+    const height = messageData?.height;
+    if (Number.isFinite(height) && height > 0) {
+      // 高度按内容区计算，宿主另外计入标题栏，避免底部被裁切。
+      // 当前安装的旧版 typings 尚未声明 withoutHeader 参数。
+      (mg.ui.resize as (width: number, height: number, withoutHeader?: boolean) => void)(
+        UI_WIDTH, Math.ceil(height), true
+      );
+    }
+    return;
+  }
+
+  if (messageType === UIMessage.UI_READY) {
+    publishTheme();
+    return;
+  }
 
   if (messageType === UIMessage.NOTIFY_ERROR) {
     if (typeof messageData === 'string' && messageData.trim()) mg.notify(messageData);

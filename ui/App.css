@@ -1,3 +1,54 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Preserve the original dark palette; MasterGo controls the root attribute. */
+:root {
+  color-scheme: dark;
+  --cf-background: #1e1e1e;
+  --cf-text: #ffffff;
+  --cf-control: #2c2c2c;
+  --cf-control-hover: #3a3a3a;
+  --cf-button-text: rgba(209, 213, 219, 0.6);
+  --cf-button-hover-text: #ffffff;
+  --cf-input-text: #c8c8c8;
+  --cf-icon: rgba(255, 255, 255, 0.5);
+  --cf-tooltip: rgba(39, 39, 39, 0.9);
+  --cf-tooltip-text: #9ca3af;
+  --cf-focus: #6389f7;
+}
+
+:root[data-chartforge-theme="light"] {
+  color-scheme: light;
+  --cf-background: #fafafa;
+  --cf-text: #262626;
+  --cf-control: #f0f0f0;
+  --cf-control-hover: #e6e6e6;
+  --cf-button-text: #666666;
+  --cf-button-hover-text: #262626;
+  --cf-input-text: #262626;
+  --cf-icon: #858585;
+  --cf-tooltip: rgba(255, 255, 255, 0.97);
+  --cf-tooltip-text: #666666;
+}
+
+html, body, #root {
+  background: var(--cf-background);
+  color: var(--cf-text);
+}
+
+html, body {
+  margin: 0;
+  overflow: hidden;
+}
+
+.cf-app { background: var(--cf-background); color: var(--cf-text); }
+.cf-button { background: var(--cf-control); color: var(--cf-button-text); }
+.cf-button:hover { background: var(--cf-control-hover); color: var(--cf-button-hover-text); }
+.cf-input { background: var(--cf-control); color: var(--cf-input-text); }
+.cf-input:focus { border-color: var(--cf-focus); outline: none; }
+.cf-info-icon { fill: var(--cf-icon); }
+.cf-tooltip { background: var(--cf-tooltip); color: var(--cf-tooltip-text); }
+:root[data-chartforge-theme="light"] .cf-tooltip {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
