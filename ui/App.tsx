@@ -1,15 +1,92 @@
 import "./App.css";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { sendMsgToPlugin, UIMessage } from "@messages/sender";
 
+function notifyError(message: string) {
+  sendMsgToPlugin({ type: UIMessage.NOTIFY_ERROR, data: message });
+}
+
+// Define outside App so parent renders never remount a focused input.
+function ConfirmInput({
+  label,
+  value,
+  onConfirm,
+}: {
+  label: string;
+  value: number;
+  onConfirm: (value: number) => boolean;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const cancel = () => {
+      setDraft(null);
+      inputRef.current?.blur();
+    };
+    window.addEventListener("blur", cancel);
+    return () => window.removeEventListener("blur", cancel);
+  }, []);
+  return (
+    <input
+      ref={inputRef}
+      className="min-w-0 min-h-0 text-[#C8C8c8] text-center w-full h-full rounded-[6px] bg-[#2c2c2c] border border-transparent focus:border-[#6389F7] focus:outline-none"
+      type="text"
+      inputMode="numeric"
+      aria-label={label}
+      title="回车确认；Esc 或点击别处取消"
+      value={draft ?? String(value)}
+      onFocus={(e) => {
+        setDraft(String(value));
+        e.currentTarget.select();
+      }}
+      onClick={(e) => e.currentTarget.select()}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={() => setDraft(null)}
+      onKeyDown={(e) => {
+        if (e.nativeEvent.isComposing) return;
+        if (e.key === "Escape") {
+          e.preventDefault();
+          e.stopPropagation();
+          setDraft(null);
+          e.currentTarget.blur();
+        } else if (e.key === "Enter") {
+          e.preventDefault();
+          const text = e.currentTarget.value.trim();
+          if (!text) {
+            notifyError(`请填写${label}`);
+            return;
+          }
+          const number = Number(text);
+          if (!Number.isSafeInteger(number) || number < 1) {
+            notifyError("高度请输入大于 0 的整数");
+            return;
+          }
+          if (onConfirm(number)) {
+            setDraft(null);
+            e.currentTarget.blur();
+          }
+        }
+      }}
+    />
+  );
+}
+
 function App() {
+  // Only confirmed values are used by chart actions.
   const [rangeMax, setRangeMax] = useState(299);
   const [rangeMin, setRangeMin] = useState(60);
+
+  function randomizeRange() {
+    sendMsgToPlugin({
+      type: UIMessage.RANDOMIZE_HEIGHT_RANGE,
+      data: { rangeMin, rangeMax },
+    });
+  }
 
   function RenderButton(button: { text: string; onClick: () => void }) {
     return (
       <div
-        className="text-gray-300/60 w-full h-full rounded-lg text-sm bg-[#2c2c2c] flex items-center justify-center cursor-pointer hover:bg-[#3a3a3a] transition-colors hover:text-[#fff]"
+        className="text-gray-300/60 w-full h-full rounded-[6px] text-sm bg-[#2c2c2c] flex items-center justify-center cursor-pointer hover:bg-[#3a3a3a] transition-colors hover:text-[#fff]"
         onClick={button.onClick}
       >
         {button.text}
@@ -18,10 +95,10 @@ function App() {
   }
 
   return (
-    <div className="bg-[#1E1E1E] px-3 py-4 gap-4 flex flex-col w-[260px] h-[500px]  text-white  select-none">
+    <div className="bg-[#1E1E1E] px-3 py-4 gap-4 flex flex-col w-[260px] h-auto  text-white  select-none">
       <div className=" flex items-center justify-between w-full">
         <div className="">
-          图表锻造<span className="ml-3 text-xs opacity-60">Chart Forge</span>
+          图表锻造<span className="ml-3 text-xs opacity-60">chartForge</span>
         </div>
         <div className="w-5 h-5 relative group">
           <div>
@@ -34,71 +111,61 @@ function App() {
             </svg>
           </div>
           <div className="absolute right-0 top-6 w-48 p-4 bg-[#272727]/90 text-xs text-gray-400 rounded-lg z-50 flex gap-2 flex-col transition-all duration-300 opacity-0 invisible group-hover:opacity-100 group-hover:visible translate-y-2 group-hover:translate-y-0">
-           <div className="font-bold">Tips</div>
-            <div>高度：每个对象底边不动，高度增加20%-50%</div>
-            <div>增量：高度增加10%-30%</div>
-            <div>范围：在默认值或用户指定范围内随机高度</div>
-            <div>折线：范围内生成全新走势，相邻点起伏不超过40%，容器上下留白10%</div>
-            <div>生成点：在节点上生成8px的点，建议在容器内使用</div>
-            <div>饼图：多选圆形后，点击可随机分配弧度</div>
+            <div className="font-bold">Tips</div>
+            <div>高度：每个对象底边不动，高度改变</div>
+            <div>范围：在设置的最大最小值内改变</div>
+            <div>饼图：随机占比</div>
           </div>
         </div>
       </div>
       <div className="flex flex-col gap-2">
-        <div className="text-sm">柱状图</div>
-        <div className="flex gap-2 h-16 ">
-          <RenderButton
-            text="高度随机"
-            onClick={() => {
-              sendMsgToPlugin({
-                type: UIMessage.RANDOMIZE_HEIGHT_FLUCTUATE,
-                data: null,
-              });
-            }}
-          />
-          <RenderButton
-            text="增量随机"
-            onClick={() => {
-              sendMsgToPlugin({
-                type: UIMessage.RANDOMIZE_HEIGHT_INCREMENT,
-                data: null,
-              });
-            }}
-          />
-        </div>
-        <div className="flex gap-2  h-16 ">
-          <div className="w-2/3">
+        <div className="text-xs">柱状图</div>
+        <div className="grid grid-cols-[2fr_1fr] gap-2 h-[130px]">
+          <div className="min-w-0">
             <RenderButton
-              text="范围随机"
+              text="随机高度"
               onClick={() => {
                 sendMsgToPlugin({
-                  type: UIMessage.RANDOMIZE_HEIGHT_RANGE,
-                  data: { rangeMin, rangeMax },
+                  type: UIMessage.RANDOMIZE_HEIGHT_FLUCTUATE,
+                  data: null,
                 });
               }}
             />
           </div>
-          <div className="h-full flex flex-col gap-2 w-1/3 text-xs">
-            <input
-              className="text-[#C8C8c8]  text-center w-full h-full rounded-lg text-md bg-[#2c2c2c] flex items-center justify-center appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-moz-number-spin-box]:appearance-none"
-              type="number"
+          <div className="min-w-0 grid grid-rows-[1fr_1.6fr_1fr] gap-2 text-xs">
+            <ConfirmInput
+              label="随机高度上限"
               value={rangeMax}
-              onChange={(e) => setRangeMax(Number(e.target.value) || 299)}
+              onConfirm={(value) => {
+                if (value < rangeMin) {
+                  notifyError("上限不能小于已确认的下限");
+                  return false;
+                }
+                setRangeMax(value);
+                return true;
+              }}
             />
 
-            <input
-              className="text-[#C8C8c8]  text-center w-full h-full rounded-lg text-md bg-[#2c2c2c] flex items-center justify-center appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-moz-number-spin-box]:appearance-none"
-              type="number"
+            <RenderButton text="范围随机" onClick={randomizeRange} />
+            <ConfirmInput
+              label="随机高度下限"
               value={rangeMin}
-              onChange={(e) => setRangeMin(Number(e.target.value) || 60)}
+              onConfirm={(value) => {
+                if (value > rangeMax) {
+                  notifyError("下限不能大于已确认的上限");
+                  return false;
+                }
+                setRangeMin(value);
+                return true;
+              }}
             />
           </div>
         </div>
       </div>
       <div className="flex flex-col gap-2">
-        <div className="text-sm ">折线图</div>
-        <div className="flex  gap-2  h-16 ">
-          <div className="w-2/3">
+        <div className="text-xs">折线图</div>
+        <div className="grid grid-cols-[2fr_1fr] gap-2 h-12">
+          <div className="min-w-0">
             <RenderButton
               text="随机折线"
               onClick={() => {
@@ -109,7 +176,7 @@ function App() {
               }}
             />
           </div>
-          <div className="w-1/3">
+          <div className="min-w-0">
             <RenderButton
               text="生成点"
               onClick={() => {
@@ -123,10 +190,10 @@ function App() {
         </div>
       </div>
       <div className="flex flex-col gap-2">
-        <div className="text-sm ">饼图</div>
-        <div className="flex  gap-2  h-16 ">
+        <div className="text-xs">饼图</div>
+        <div className="flex gap-2 h-12 ">
           <RenderButton
-            text="随机"
+            text="随机占比"
             onClick={() => {
               sendMsgToPlugin({
                 type: UIMessage.RANDOMIZE_ARC_DATA,

@@ -38,6 +38,13 @@ export function randomizeHeightFluctuate(selection: readonly any[]) {
 export function randomizeHeightRange(selection: readonly any[], rangeMin?: number, rangeMax?: number) {
   const min = rangeMin ?? 60;
   const max = rangeMax ?? 299;
+
+  if (!Number.isSafeInteger(min) || !Number.isSafeInteger(max) || min < 1 || max < 1) {
+    return { success: false, message: '高度请输入大于 0 的整数' };
+  }
+  if (min > max) {
+    return { success: false, message: '上限不能小于下限' };
+  }
   
   if (selection.length === 0) {
     return { success: false, message: '请先选择一个矩形' };

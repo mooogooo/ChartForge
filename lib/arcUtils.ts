@@ -11,6 +11,25 @@ const colorData = [
   'rgb(4, 32, 54)',      // cornflower-blue-19
 ];
 
+// 整组椭圆均为单层、不透明的纯白或默认灰填充时，应用蓝色系。
+// 渐变、图片、多层填充和其他已有配色均保留。
+function allEllipsesHaveDefaultFill(ellipses: any[]): boolean {
+  return ellipses.length > 0 && ellipses.every(ellipse => {
+    const fills = ellipse.fills;
+    if (!Array.isArray(fills) || fills.length !== 1) return false;
+    const fill = fills[0];
+    const color = fill.color;
+    // SDK 可能以浮点数存储 216 / 255，容忍浮点精度误差。
+    const matchesGray = (value: number) => Number.isFinite(value) && Math.abs(value - 216 / 255) < 0.000001;
+    const isWhite = color?.r === 1 && color?.g === 1 && color?.b === 1;
+    const isDefaultGray = color && matchesGray(color.r) && matchesGray(color.g) && matchesGray(color.b);
+    return fill.type === 'SOLID' && fill.isVisible !== false && fill.visible !== false &&
+      (fill.opacity === undefined || fill.opacity === 1) &&
+      (isWhite || isDefaultGray) &&
+      (color.a === undefined || color.a === 1);
+  });
+}
+
 /**
  * 随机设置EllipseNode的弧度数据
  * @param selection 当前选中的元素
@@ -31,6 +50,7 @@ export function randomizeArcData(
   // 按图层顺序排序，index越大越上层
   ellipses.sort((a, b) => a.index - b.index);
 
+  const applyBluePalette = allEllipsesHaveDefaultFill(ellipses);
   const count = ellipses.length;
 
   // 计算每个椭圆的弧度百分比
@@ -62,7 +82,7 @@ export function randomizeArcData(
     const colorStr = colorData[i % colorData.length];
     
     const rgbMatch = colorStr.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
-    if (rgbMatch) {
+    if (applyBluePalette && rgbMatch) {
       const [, r, g, b] = rgbMatch;
       
       // 创建正确的RGBA对象
@@ -116,6 +136,7 @@ export function randomizeArcData_curve(
 
   ellipses.sort((a, b) => a.index - b.index);
 
+  const applyBluePalette = allEllipsesHaveDefaultFill(ellipses);
   const count = ellipses.length;
   const percentages: number[] = [];
 
@@ -157,7 +178,7 @@ export function randomizeArcData_curve(
     // 设置填充颜色
     const colorStr = colorData[i % colorData.length];
     const rgbMatch = colorStr.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
-    if (rgbMatch) {
+    if (applyBluePalette && rgbMatch) {
       const [, r, g, b] = rgbMatch;
       
       const rgbaColor = {
@@ -192,8 +213,12 @@ export function randomizeArcData_curve(
 
 
 
+const PIE_CYCLE_KEY = 'chartforge.pieCycle.v1';
+
 /**
- * 方案三：随机点集 + 排序
+ * 四步循环：平均、前半偏大、后半偏大、轻微起伏。
+ * 先计算实际可见占比，再转换成叠放椭圆的累计弧度。
+ * 保留函数名称以兼容现有按钮入口。
  */
 export function randomizeArcData_randomSet(
   selection: any[]
@@ -207,23 +232,51 @@ export function randomizeArcData_randomSet(
     return { success: false, message: '请选择至少一个椭圆对象' };
   }
 
-  ellipses.sort((a, b) => a.index - b.index);
+  // 同父级按真实图层顺序排序，不依赖用户框选/点选的先后顺序。
+  ellipses.sort((a, b) => {
+    if (a.parent && a.parent.id === b.parent?.id) {
+      const siblings = a.parent.children;
+      return siblings.findIndex((node: any) => node.id === a.id) -
+        siblings.findIndex((node: any) => node.id === b.id);
+    }
+    return (a.index ?? 0) - (b.index ?? 0) || a.id.localeCompare(b.id);
+  });
 
+  const applyBluePalette = allEllipsesHaveDefaultFill(ellipses);
   const count = ellipses.length;
+  const selectionKey = JSON.stringify(ellipses.map(node => [node.parent?.id, node.id]));
+  const previous = ellipses[0].getPluginData(PIE_CYCLE_KEY);
+  let stage = 0;
+  try {
+    const saved = JSON.parse(previous);
+    if (saved.selectionKey === selectionKey && Number.isInteger(saved.nextStage) &&
+        saved.nextStage >= 0 && saved.nextStage < 4 &&
+        ellipses.every(node => node.getPluginData(PIE_CYCLE_KEY) === previous)) {
+      stage = saved.nextStage;
+    }
+  } catch (_) { /* 新选区或无效数据从平均开始。 */ }
 
-  const minTopPercent = Math.max(8, 100 / (count * 2));
-  const randomValues: number[] = [];
-
-  for (let i = 0; i < count - 1; i++) {
-    randomValues.push(
-      minTopPercent +
-        Math.random() * (100 - minTopPercent)
-    );
+  let shares: number[];
+  if (stage === 0 || count === 1) {
+    shares = ellipses.map(() => 100 / count);
+  } else {
+    const favoredCount = Math.ceil(count / 2);
+    const weights = ellipses.map((_, i) => {
+      if (stage === 3) return 0.8 + Math.random() * 0.4;
+      const favored = stage === 1 ? i < favoredCount : i >= count - favoredCount;
+      return favored ? 3 + Math.random() * 2 : 0.5 + Math.random() * 0.5;
+    });
+    const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+    // 留出 75% 的空间拉开差异；每块仍至少占平均比例的 1/4。
+    shares = weights.map(weight => 25 / count + 75 * weight / totalWeight);
   }
 
-  randomValues.sort((a, b) => b - a);
-
-  const percentages = [100, ...randomValues];
+  // 底层保持整圆；相邻层累计弧度的差值才是该层实际可见的占比。
+  // 例如 shares=[20,30,50] 时，累计弧度应为 [100,80,50]。
+  const percentages: number[] = [100];
+  for (let i = 1; i < count; i++) {
+    percentages.push(percentages[i - 1] - shares[i - 1]);
+  }
 
   const startAngle = (-90 * Math.PI) / 180;
 
@@ -237,7 +290,7 @@ export function randomizeArcData_randomSet(
     // 设置填充颜色
     const colorStr = colorData[i % colorData.length];
     const rgbMatch = colorStr.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
-    if (rgbMatch) {
+    if (applyBluePalette && rgbMatch) {
       const [, r, g, b] = rgbMatch;
       
       const rgbaColor = {
@@ -261,6 +314,11 @@ export function randomizeArcData_randomSet(
       ];
     }
   }
+
+  // 每个成员保存相同状态；换选区会重新从平均开始。
+  // 随图形一起提交，重开插件可续接，撤销时也能恢复循环进度。
+  const nextCycle = JSON.stringify({ selectionKey, nextStage: (stage + 1) % 4 });
+  for (const ellipse of ellipses) ellipse.setPluginData(PIE_CYCLE_KEY, nextCycle);
 
   // 提交到撤销历史
   if (typeof mg !== 'undefined' && mg.commitUndo) {

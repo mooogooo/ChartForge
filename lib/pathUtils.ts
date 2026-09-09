@@ -92,27 +92,54 @@ function prepare(node: any) {
     }
   }
   if (!Number.isFinite(range.min) || !Number.isFinite(range.max) || range.max <= range.min) throw new Error('容器高度无效');
-  return { node, scope, network, stored, range, originalPoints, originalTransform: clone(node.absoluteTransform) as Matrix,
+  return { node, scope, network, stored, range, originalPoints,
+    originalWidth: node.width, originalHeight: node.height,
+    originalTransform: clone(node.absoluteTransform) as Matrix,
     target: generateChartPoints(originalPoints, range) };
 }
 
-// MasterGo can normalize pen coordinates when setting penNetwork. Correct only the
-// resulting translation, then verify every point instead of assuming setter behavior.
+// Keep geometry and the object's bounds in the same coordinate system. Changing
+// width/height may scale the old geometry, so replace the network AFTER resizing.
 function writePoints(node: any, scope: any, network: any, target: Point[]) {
   const local = inverse(inScope(node, scope));
+  const oldAbsolute = clone(absolute(node));
+  const localPoints = target.map(p => transform(local, p));
+  const minX = Math.min(...localPoints.map(p => p.x));
+  const minY = Math.min(...localPoints.map(p => p.y));
+  const width = Math.max(...localPoints.map(p => p.x))-minX;
+  const height = Math.max(...localPoints.map(p => p.y))-minY;
+  const origin = transform(oldAbsolute, { x: minX, y: minY });
+  const desiredAbsolute: Matrix = [
+    [oldAbsolute[0][0], oldAbsolute[0][1], origin.x],
+    [oldAbsolute[1][0], oldAbsolute[1][1], origin.y]
+  ];
   const next = clone(network);
-  next.nodes = network.nodes.map((p: Point, i: number) => ({ ...p, ...transform(local, target[i]) }));
+  next.nodes = network.nodes.map((p: Point, i: number) => ({
+    ...p, x: localPoints[i].x-minX, y: localPoints[i].y-minY
+  }));
+  node.width = width;
+  node.height = height;
   node.penNetwork = next;
-  const actual = pointsInScope(node, scope);
-  const dx = target[0].x-actual[0].x;
-  const dy = target[0].y-actual[0].y;
-  if (Math.abs(dx) > EPSILON || Math.abs(dy) > EPSILON) {
-    const scopeToParent = multiply(inverse(absolute(node.parent)), absolute(scope));
-    node.x += scopeToParent[0][0]*dx+scopeToParent[0][1]*dy;
-    node.y += scopeToParent[1][0]*dx+scopeToParent[1][1]*dy;
-  }
+  // The origin moves to the new top-left; subtracting that same offset from all
+  // vertices above preserves every target point's position on the canvas.
+  // Read the parent transform now, since resizing can move auto-sizing groups.
+  node.relativeTransform = multiply(inverse(absolute(node.parent)), desiredAbsolute);
   if (pointsInScope(node, scope).some((p, i) => Math.abs(p.x-target[i].x) > EPSILON || Math.abs(p.y-target[i].y) > EPSILON)) {
-    throw new Error('宿主调整了路径位置或尺寸，已尝试恢复；请将折线放入固定尺寸容器');
+    throw new Error('外框更新时宿主改变了节点位置，请将折线放入固定尺寸容器');
+  }
+  assertBounds(node);
+}
+
+function assertBounds(node: any) {
+  const points: Point[] = node.penNetwork.nodes;
+  const minX = Math.min(...points.map(p => p.x));
+  const minY = Math.min(...points.map(p => p.y));
+  const maxX = Math.max(...points.map(p => p.x));
+  const maxY = Math.max(...points.map(p => p.y));
+  if (![minX, minY, maxX, maxY, node.width, node.height].every(Number.isFinite) ||
+      Math.abs(minX) > EPSILON || Math.abs(minY) > EPSILON ||
+      Math.abs(maxX-node.width) > EPSILON || Math.abs(maxY-node.height) > EPSILON) {
+    throw new Error('宿主未能同步折线外框，本次操作已取消');
   }
 }
 
@@ -132,6 +159,7 @@ export function randomizePathPoints(selection: readonly any[]): { success: boole
       if (actual.some((p, i) => Math.abs(p.x-plan.target[i].x) > EPSILON || Math.abs(p.y-plan.target[i].y) > EPSILON)) {
         throw new Error('父级布局改变了折线位置，请使用固定尺寸容器');
       }
+      assertBounds(plan.node);
       plan.node.setPluginData(RANGE_KEY, plan.scope.type === 'PAGE'
         ? JSON.stringify({ ...plan.range, signature: signature(plan.node, plan.scope) }) : '');
     }
@@ -141,6 +169,8 @@ export function randomizePathPoints(selection: readonly any[]): { success: boole
     let restored = true;
     for (const plan of changed.reverse()) {
       try {
+        plan.node.width = plan.originalWidth;
+        plan.node.height = plan.originalHeight;
         plan.node.penNetwork = clone(plan.network);
         plan.node.relativeTransform = multiply(inverse(absolute(plan.node.parent)), plan.originalTransform);
         plan.node.setPluginData(RANGE_KEY, plan.stored);

@@ -4,6 +4,7 @@ export enum PluginMessage {
 
 //UI发出的消息
 export enum UIMessage {
+  NOTIFY_ERROR = 'NotifyError', // UI 输入校验的系统提示
   HELLO = 'Hello!',
   RANDOMIZE_HEIGHT = 'RandomizeHeight',
   SET_FIXED_SIZE = 'SetFixedSize',
